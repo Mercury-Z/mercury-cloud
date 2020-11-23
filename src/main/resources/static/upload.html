@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="/js/jquery-3.4.1.js"></script>
+</head>
+<body>
+<form id="upload-form" enctype="multipart/form-data" >
+    　　　　<input type="file" id="upload" name="file" /> <br />
+    　　　　<input type="submit" value="Upload" />
+</form>
+<br>
+<div>
+    <span>利用FormData上传多个文件</span><br />
+    <form id="myForm3">
+        <input type="file" id="myFile" multiple />
+        <input type="button" value="利用FormData上传多个文件" onclick="uploadSome()" />
+    </form>
+    <span class="result"></span>
+</div>
+
+<script>
+    /**
+     * 分片上传
+     */
+    function uploadStep() {
+        var upload = function (file, skip) {
+            var data = new FormData();
+            var blockSize = 1000;
+            var nextSize = Math.min((skip + 1) * blockSize, file.size);
+            var fileData = file.slice(skip * blockSize, nextSize);
+            data.append("myFile", fileData);
+
+            //由于传输的是二进制数据(fileData),后台(MVC或者Api无法通过files[0].FileName获取文件名
+            //所以只能通过构造form表单数据传递(键值对形式,fileName=xxx.jpg&aaa=yyy),后台再通过request.Form[fileName]获取
+            data.append("fileName", file.name);
+            var url = "http://localhost:42561/api/upload/uploadStep";
+            $.ajax({
+                url: url,
+                type: "POST",
+                data: data,
+                processData: false, // 告诉jQuery不要去处理发送的数据
+                contentType: false, // 告诉jQuery不要去设置Content-Type请求头
+                success: function () {
+                    $(".result").html("已经上传了" + (skip + 1) + "块文件");
+                    if (file.size <= nextSize) { //如果上传完成，则跳出继续上传
+                        alert("上传完成");
+                        return;
+                    }
+                    upload(file, ++skip); //递归调用
+                }
+            });
+        };
+        var file = $("#myFileStep")[0].files[0];
+        upload(file, 0);
+    }
+
+    /**
+     * 多文件上传
+     */
+    // function uploadSome() {
+    //     var url = "http://localhost:42561/api/upload/upload";
+    //
+    //     var data = new FormData();
+    //     var files = $("#myFile")[0].files;
+    //     for (var i = 0; i < files.length; i++) {
+    //         //这里的 myFile0,myFile1,myFile2就是input type="file" 标签的name属性,所以标签里面可以不用写name属性了
+    //         data.append("myFile" + i, $("#myFile")[0].files[i]);
+    //     }
+    //     $.ajax({
+    //         url: url,
+    //         data: data,
+    //         type: "post",
+    //         processData: false,
+    //         contentType: false,
+    //         cache: false,
+    //         success: function () { }
+    //     });
+    // }
+
+    /**
+     * 多文件分段上传
+     * $("#myFile").files.length
+     */
+    function upload(file, skip) {
+        var data = new FormData();
+        var blockSize = 1024*1024*1024;
+        var nextSize = Math.min((skip + 1) * blockSize, file.size);
+        var fileData = file.slice(skip * blockSize, nextSize);
+        data.append("file", fileData);
+        //由于传输的是二进制数据(fileData),后台(MVC或者Api无法通过files[0].FileName获取文件名
+        //所以只能通过构造form表单数据传递(键值对形式,fileName=xxx.jpg&aaa=yyy),后台再通过request.Form[fileName]获取
+        data.append("fileName", file.name);
+        console.log(file.name);
+        var url = "/saveFile";
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: data,
+            processData: false, // 告诉jQuery不要去处理发送的数据
+            contentType: false, // 告诉jQuery不要去设置Content-Type请求头
+            success: function () {
+                $(".result").html("已经上传了" + (skip + 1) + "块文件");
+                if (file.size <= nextSize) { //如果上传完成，则跳出继续上传
+                    alert("上传完成");
+                    //检查是不是最后一块
+                    //不是最后一块异步检查服务器上
+                    return;
+                }
+                //返回上传并合并成功
+                upload(file, ++skip); //递归调用
+                //失败
+                //upload(file, skip);
+            }
+        });
+    }
+    function uploadSome() {
+        var fileCount = $("#myFile")[0].files.length;
+        for (var i = 0; i < fileCount; i++) {
+            console.log(i);
+            upload($("#myFile")[0].files[i],0);
+            console.log($("#myFile")[0].files[i].name);
+        }
+    }
+  //  var file = $("#myFileStep")[0].files[0];
+  //  upload(file, 0);
+
+    /**
+     * 文件进度条
+     * 
+     */
+</script>
+</body>
+</html>
