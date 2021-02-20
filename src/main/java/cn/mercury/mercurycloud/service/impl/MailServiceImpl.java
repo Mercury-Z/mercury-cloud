@@ -46,7 +46,7 @@ public class MailServiceImpl implements MailService {
             mailSender.send(message);
         } catch (Exception e) {
             e.printStackTrace();
-            new RuntimeException("发送邮件失败");
+//            new RuntimeException("发送邮件失败");
         }
 
         return String.valueOf(code);
