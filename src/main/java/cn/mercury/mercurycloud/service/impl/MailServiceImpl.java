@@ -36,18 +36,18 @@ public class MailServiceImpl implements MailService {
         MimeMessageHelper helper = null;
         //   MimeMessageHelper helper = new MimeMessageHelper(message);
 
-//        try {
-//            helper = new MimeMessageHelper(message,true);
-//            helper.setSubject(title);
-//            helper.setText("Mercury-Cloud:check code is : "+code);
-////            helper.setText(text);
-//            helper.setFrom(from,"Mercury-Cloud");
-//            helper.setTo(acceptEmail);
-//            mailSender.send(message);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            new RuntimeException("发送邮件失败");
-//        }
+        try {
+            helper = new MimeMessageHelper(message,true);
+            helper.setSubject(title);
+            helper.setText("Mercury-Cloud:注册验证码为 : "+code);
+//            helper.setText(text);
+            helper.setFrom(from,"Mercury-Cloud");
+            helper.setTo(acceptEmail);
+            mailSender.send(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+            new RuntimeException("发送邮件失败");
+        }
 
         return String.valueOf(code);
     }

@@ -303,7 +303,6 @@ public class FileController extends BaseController{
         if (fileStore.getCurrentSize()==null){
             fileStore.setCurrentSize(0);
         }
-        System.out.println(fileStore);
         if (fileStore.getCurrentSize()<fileStore.getMaxSize()){
             fileStore.setPermission(0);
         }
@@ -407,6 +406,9 @@ public class FileController extends BaseController{
         //更新仓库信息
         FileStore fileStore = fileStoreService.getFileStoreByFileStoreId(loginUser.getFileStoreId());
         fileStore.setCurrentSize(fileService.countAllFileSizeByFileStoreId(loginUser.getFileStoreId()));
+        if (fileStore.getCurrentSize()==null){
+            fileStore.setCurrentSize(0);
+        }
         if (fileStore.getCurrentSize()<fileStore.getMaxSize()){
             fileStore.setPermission(0);
         }
