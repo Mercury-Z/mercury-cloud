@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" name="viewport">
+	<title>墨丘利网盘-我的文件</title>
+
+	<link rel="stylesheet" href="u-admin/dist/modules/bootstrap/css/bootstrap.min.css">
+	<link rel="stylesheet" href="u-admin/dist/modules/ionicons/css/ionicons.min.css">
+	<link rel="stylesheet" href="u-admin/dist/modules/fontawesome/web-fonts-with-css/css/fontawesome-all.min.css">
+
+	<link rel="stylesheet" href="u-admin/dist/modules/summernote/summernote-lite.css">
+	<link rel="stylesheet" href="u-admin/dist/modules/flag-icon-css/css/flag-icon.min.css">
+	<link rel="stylesheet" href="u-admin/dist/css/demo.css">
+	<link rel="stylesheet" href="u-admin/dist/css/style.css">
+	<link rel="stylesheet" href="plug-ins/xcConfirm/css/xcConfirm.css">
+	<link rel="stylesheet" href="plug-ins/context-menu/css/contextMenu.css">
+	<style>
+		.files-items{
+			margin-top: -20px;
+			border-bottom: 1px dashed #bdc3c7;
+			border-top: 1px dashed #bdc3c7;
+		}
+		.files-items:hover{
+			background: #F4FBFF;
+		}
+	</style>
+
+</head>
+
+<body>
+<div id="app">
+	<div class="main-wrapper">
+		<div class="navbar-bg"></div>
+		<div th:replace="commons/bar::#top"></div>
+		<div th:replace="commons/bar::#sidebar(currUri='all',fileStoreInfo = ${fileStoreInfo})"></div>
+
+		<div class="main-content">
+			<section class="section">
+				<h1 class="section-header">
+					<div><i class="ion ion-folder"></i> 全部文件 <span style="color: red;font-size: 14px" th:if="${error != null}" th:text="${error}"></span></div>
+				</h1>
+				<div class="row" id="folder-row">
+<!--					文件列表-->
+					<div th:replace="commons/row::#file-row(files = ${files},folders=${folders},nowFolder = ${nowFolder})"></div>
+				</div>
+
+			</section>
+		</div>
+		<div th:replace="commons/bar::#footer"></div>
+	</div>
+</div>
+<script src="js/jquery-3.4.1.js"></script>
+<script>
+	$(function () {
+		$('.folders').dblclick(function () {
+			let id = $(this).children("td").children("span").html();
+			var location = window.location.href;
+			let strings = location.split("?");
+			if (id != ""){
+				window.location.href = strings[0]+"?fId="+id;
+			}else{
+				return;
+			}
+		});
+		$('.files').dblclick(function () {
+			let id = $(this).children("td").children("span").html();
+			if (id != ""){
+				download(id);
+			}else{
+				return;
+			}
+		});
+		$('.folders').hover(function () {
+			// let id = $(this).children("td").children("span").html();
+			// $('#tarFolder').html(id);
+			$(this).siblings().removeClass('flag');
+			$(this).addClass('flag');
+		},function () {
+		});
+		$('.files').hover(function () {
+			// let id = $(this).children("td").children("span").html();
+			// $('#tarFile').html(id);
+			$(this).siblings().removeClass('flag');
+			$(this).addClass('flag');
+		},function () {
+		});
+	});
+	function download(id) {
+		permission = [[${permission}]];
+		if (permission == 2){
+			alert("可能因为你的违规操作，您暂时无法下载文件！");
+			return;
+		}
+		window.location.href = "downloadFile?time="+new Date().getTime()+"&tip="+Math.random()*1000000+"&fId="+id;
+	}
+</script>
+<script src="plug-ins/context-menu/js/jquery.contextMenu.min.js"></script>
+<script src="plug-ins/xcConfirm/js/xcConfirm.js"></script>
+<script>
+	$(".files").contextMenu({
+		width: 100, // width
+		itemHeight: 30, // 菜单项height
+		bgColor: "#fff", // 背景颜色
+		color: "#333", // 字体颜色
+		fontSize: 12, // 字体大小
+		hoverBgColor: "#3498db", // hover背景颜色
+		target: function(ele) { // 当前元素
+			//console.log(ele);
+			$(ele).focus();
+			$('.files-items').removeClass('target');
+			$(ele).addClass("target");
+			let id = $(ele).children("td").children("span").html();
+			$('#tarFile').html(id);
+		},
+		menu: [{ // 菜单项
+			text: " 下载",
+			callback: function() {
+				let id = $('#tarFile').html();
+				if (id != ""){
+					download(id);
+				}else{
+					return;
+				}
+			}
+		},
+			{
+				text: " 重命名",
+				callback: function() {
+					let id = $('.target td span').html();
+					let name = $('.target td a').html();
+					let html = $('.target td').eq(1).html($('' +
+							"<form id='updateFileForm' action='updateFile'  onsubmit='return submitUpdateFile()'>" +
+							"<input id='updateFileName' name='myFileName' autocomplete='off' type='text' onblur='submitUpdateFile()' value='"+name+"'>" +
+							"<input type='hidden' name='myFileId' value='"+id+"'>" +
+							"<input type='hidden' name='parentFolderId' value='"+ $('#nowF').html()+"'>" +
+							"</form>" +
+							''));
+					$("#updateFileName").focus();
+				}
+			},
+			{
+				text: " 删除",
+				callback: function() {
+					let id = $('#tarFile').html();
+					var location = window.location.href;
+				//	let strings = location.split("moti-cloud");
+					if (id != ""){
+				//		window.location.href = strings[0]+"moti-cloud/deleteFile?fId="+id+"&folder="+$('#nowF').html();
+					//	window.location.href = "/deleteFile?fId="+id+"&folder="+$('#nowF').html();
+						$.ajax({
+							url:"deleteFile",
+							type:"post",
+							data:{"fId":+id},
+							dataType:"json",
+							async:false,
+							success:function(data){
+								if (data.status==0)
+									alert(data.error);
+								else{
+									alert(data.msg);
+									window.location.reload();
+								}
+							}
+						});
+					}else{
+						return;
+					}
+				}
+			}
+		]
+
+	});
+	$(".folders").contextMenu({
+		width: 100, // width
+		itemHeight: 30, // 菜单项height
+		bgColor: "#fff", // 背景颜色
+		color: "#333", // 字体颜色
+		fontSize: 12, // 字体大小
+		hoverBgColor: "#3498db", // hover背景颜色
+		target: function(ele) { // 当前元素
+			console.log(ele);
+		//	addScrollHeight(ele);
+			$(ele).focus();
+			$('.files-items').removeClass('target');
+			$(ele).addClass("target");
+			let id = $(ele).children("td").children("span").html();
+			$('#tarFolder').html(id);
+		},
+		menu: [{ // 菜单项
+			text: " 打开",
+			callback: function() {
+				let id = $('#tarFolder').html();
+				var location = window.location.href;
+				let strings = location.split("?");
+				if (id != ""){
+					window.location.href = strings[0]+"?fId="+id;
+				}else{
+					return;
+				}
+			}
+		},
+			{
+				text: " 返回上一级",
+				callback: function() {
+					toPreFolder();
+				}
+			},
+			{
+				text: " 重命名",
+				callback: function() {
+					let id = $('.target td span').html();
+					let name = $('.target td a').html();
+					let html = $('.target td').eq(1).html($('' +
+							"<form id='updateFolderForm' action='updateFolder' method='post'  onsubmit='return submitUpdateFolder()'>" +
+							"<input id='updateFolderName' name='fileFolderName' autocomplete='off' type='text' onblur='submitUpdateFolder()' value='"+name+"'>" +
+							"<input type='hidden' name='fileFolderId' value='"+id+"'>" +
+							"<input type='hidden' name='parentFolderId' value='"+ $('#nowF').html()+"'>" +
+							"</form>" +
+							''));
+					$("#updateFolderName").focus();
+				}
+			},
+			{
+				text: " 新建文件夹",
+				callback: function() {
+					addFolderElement();
+				}
+			},
+			{
+				text: " 清空并删除",
+				callback: function() {
+					let id = $('#tarFolder').html();
+					var location = window.location.href;
+					if (id != ""){
+					//	window.location.href ="/deleteFolder?fId="+id;
+						$.ajax({
+							url:"deleteFolder",
+							type:"post",
+							data:{"fId":+id},
+							dataType:"json",
+							async:false,
+							success:function(data){
+								if (data.status==0)
+									alert(data.error);
+								else{
+									alert(data.msg);
+									window.location.reload();
+								}
+							}
+						});
+					}else{
+						return;
+					}
+				}
+			}
+		]
+
+	});
+	$(".empty-space").contextMenu({
+		width: 100, // width
+		itemHeight: 30, // 菜单项height
+		bgColor: "#fff", // 背景颜色
+		color: "#333", // 字体颜色
+		fontSize: 12, // 字体大小
+		hoverBgColor: "#3498db", // hover背景颜色
+		target: function(ele) { // 当前元素
+			console.log(ele);
+			$(ele).focus()
+			$('.files-items').removeClass('target');
+		//	addScrollHeight(ele);
+		},
+		menu: [
+			{
+				text: " 新建文件夹",
+				callback: function() {
+					addFolderElement();
+				}
+			},
+			{
+				text: " 返回上一级",
+				callback: function() {
+					toPreFolder();
+				}
+			}
+		]
+
+	});
+	function toPreFolder() {
+		var location = window.location.href;
+		let strings = location.split("?");
+		var pre = $('#preF').html();
+		if (pre != ""){
+			window.location.href = strings[0]+"?fId="+pre;
+		}else{
+			return;
+		}
+	}
+	function addFolderElement() {
+		var now = $('#nowF').html();
+		$("<tr class='files-items folders'><td><i style='font-size: 24px;color: orange' class='icon ion-android-folder'></i></td>" +
+				"<td>" +
+				"<form id='addFolderForm'action='#' onsubmit='return submitAddFolder()''>" +
+				"<input id='newFolder'  autocomplete='off' name='fileFolderName' type='text' onblur='checkAddFolder(this)'>" +
+				"<input type='hidden' name='parentFolderId' value='"+now+"'>" +
+				"</form>" +
+				"</td>" +
+				"<td style='font-weight: 300'>文件夹</td>" +
+				"<td style='font-weight: 300'>-</td>" +
+				"<td style='font-weight: 300'>-</td>" +
+				"</tr>").insertAfter($('#files-table-title'));
+	//	addEle.html("");
+		$('#newFolder').focus();
+	}
+	function submitAddFolder() {
+		$("#newFolder").blur();
+		return false;
+	}
+	function checkAddFolder(addEle) {
+		// alert($(addEle).parent().parent().html(""));
+		var name = $.trim($("#newFolder").val());
+		//var nameReg = /^[\u4E00-\u9FA5A-Za-z0-9]{1,20}$/;
+		var nameReg =/[<>|*?,\/]/;
+		if (name.length<=0||nameReg.test(name)) {
+			alert("文件夹格式错误！不能包含<,>,|,*,?,,/");
+			var location = window.location.href;
+			$(addEle).parent().parent().parent().remove();
+		//	window.location.href = location;
+		}else{
+			//创建文件夹 后期改为异步创建
+			var formData = $('#addFolderForm').serialize();
+			$.ajax({
+				url:"addFolder",
+				type:"post",
+				data:formData,
+				dataType:"json",
+				async:false,
+				success:function(data){
+					if (data.status==0){
+						alert(data.error);
+						$(addEle).parent().parent().parent().remove();
+					}
+					else{
+						//alert(data.folder.fileFolderId);
+						window.location.reload();
+					}
+				}
+			});
+		}
+	}
+	function checkUpdateFolder() {
+		//不能包含<,>,|,*,?,,/
+		var name = $.trim($("#updateFolderName").val());
+		//console.log(name);
+		//var nameReg = /^[\u4E00-\u9FA5A-Za-z0-9]{2,20}$/;
+		var nameReg =/[<>|*?,\/]/;
+		if (name.length<=0||nameReg.test(name)) {
+			alert("文件夹名格式错误！不能包含<,>,|,*,?,,/");
+			//var location = window.location.href;
+			window.location.reload();
+		}else{
+			$('#updateFolderForm').submit();
+		}
+	}
+	function submitUpdateFolder() {
+		var name = $.trim($("#updateFolderName").val());
+		var nameReg =/[<>|*?,\/]/;
+		if (name.length<=0||nameReg.test(name)){
+			alert("文件夹名格式错误！不能包含<,>,|,*,?,,/");
+			window.location.reload();
+		}else{
+			var formData = $('#updateFolderForm').serialize();
+			$.ajax({
+				url:"updateFolder",
+				type:"post",
+				data:formData,
+				dataType:"json",
+				async:false,
+				success:function(data){
+					if (data.status==0){
+						alert(data.error);
+						window.location.reload();
+					}
+					else{
+						//alert(data.folder.fileFolderId);
+						window.location.reload();
+					}
+				}
+			});
+		}
+		return false;
+	}
+	function checkUpdateFile() {
+		var name = $.trim($("#updateFileName").val());
+		//var nameReg = /^[^\u4E00-\u9FA5\uF900-\uFA2D\w-_]{2,20}$/;
+		var nameReg =/[<>|*?,\/]/;
+		if (nameReg.test(name)) {
+			console.log("文件夹格式错误！不能包含<,>,|,*,?,,/");
+			var location = window.location.href;
+		//	window.location.href = location;
+		}else{
+		//	$('#updateFileNameForm').submit();
+		}
+	}
+	function submitUpdateFile() {
+		var name = $.trim($("#updateFileName").val());
+		var nameReg =/[<>|*?,\/]/;
+		if (name.length<=0||nameReg.test(name)){
+			alert("文件名格式错误！不能包含<,>,|,*,?,,/");
+			window.location.reload();
+		}else{
+			var formData = $('#updateFileForm').serialize();
+			$.ajax({
+				url:"updateFile",
+				type:"post",
+				data:formData,
+				dataType:"json",
+				async:false,
+				success:function(data){
+					if (data.status==0){
+						alert(data.error);
+						window.location.reload();
+					}
+					else{
+						//alert(data.folder.fileFolderId);
+						window.location.reload();
+					}
+				}
+			});
+		}
+		return false;
+	}
+</script>
+<script src="u-admin/dist/modules/jquery.min.js"></script>
+<script src="u-admin/dist/modules/popper.js"></script>
+<script src="u-admin/dist/modules/tooltip.js"></script>
+<script src="u-admin/dist/modules/bootstrap/js/bootstrap.min.js"></script>
+<script src="u-admin/dist/modules/nicescroll/jquery.nicescroll.min.js"></script>
+<script src="u-admin/dist/modules/scroll-up-bar/dist/scroll-up-bar.min.js"></script>
+<script src="u-admin/dist/js/sa-functions.js"></script>
+
+<script src="u-admin/dist/modules/chart.min.js"></script>
+<script src="u-admin/dist/modules/summernote/summernote-lite.js"></script>
+
+<script src="u-admin/dist/js/scripts.js"></script>
+<script src="u-admin/dist/js/custom.js"></script>
+<script src="u-admin/dist/js/demo.js"></script>
+<script src="u-admin/dist/modules/chart.min.js"></script>
+</body>
+</html>

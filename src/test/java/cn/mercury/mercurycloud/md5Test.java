@@ -37,6 +37,7 @@ public class md5Test {
                 while (position < total) {
                     long size = page <= total - position ? page : total - position;
                     MappedByteBuffer byteBuffer = channel.map(FileChannel.MapMode.READ_ONLY, position, size);
+                  //  System.out.println(byteBuffer.array());
                     position += size;
                     md5.update(byteBuffer);
                 }
@@ -80,7 +81,7 @@ public class md5Test {
             }
         }
 //--------------------------------------------------------
-public static String getMD5(File file) {
+public static String saveFileAndGetMD5(File file) {
     FileInputStream fileInputStream = null;
     try {
         MessageDigest MD5 = MessageDigest.getInstance("MD5");
@@ -117,9 +118,18 @@ public static String getMD5(File file) {
     public  void test() {
         long beginTime = System.currentTimeMillis();
         File file = new File("C:\\DATA\\GL\\树莓立方体\\root.pfs.002");
-        String md5 = getMD5(file);
+        String md5 = saveFileAndGetMD5(file);
         long endTime = System.currentTimeMillis();
         System.out.println("MD5:" + md5 + "\n 耗时:" + ((endTime - beginTime) / 1000) + "s");
+    }
+    @Test
+    public void test2(){
+        File file = new File("C://DATA//MERCURY_CLOUD//test//","a.txt");
+            if (!file.getParentFile().exists()){
+                System.out.println(file.getParentFile());
+                file.getParentFile().mkdirs();
+            }
+//            file.createNewFile();
     }
 
 }

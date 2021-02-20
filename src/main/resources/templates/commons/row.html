@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+
+</head>
+<body>
+<div class="col-12 col-sm-12 col-lg-12" id="file-row">
+    <div class="card">
+        <div class="card-body">
+            <nav aria-label="breadcrumb" class="empty-space">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a
+                            th:href="@{/files(fId=${nowFolder.fileFolderId})}"
+                            title="刷新"><i
+                            class="icon ion-refresh"></i></a>
+                    </li>
+                    <li th:class="${nowFolder.fileFolderId == 0?'breadcrumb-item active':'breadcrumb-item'}">
+                                                            <span th:if="${nowFolder.fileFolderId == 0}"
+                                                                  th:text="根目录"></span><a style="font-weight: bold"
+                                                                                          th:if="${nowFolder.fileFolderId != 0}"
+                                                                                          href="files">根目录</a></li>
+                    <li th:each="l:${location}" class="breadcrumb-item"><a
+                            style="font-weight: bold"
+                            th:href="@{/files(fId=${l.fileFolderId},fName=${l.fileFolderName})}"
+                            th:text="${l.fileFolderName}"></a></li>
+                    <li th:if="${nowFolder.fileFolderId != 0}"
+                        class="breadcrumb-item active" aria-current="page"
+                        th:text="${nowFolder.fileFolderName}"></li>
+                    <li th:if="${nowFolder.fileFolderId != 0}"
+                        class="breadcrumb-item"><a
+                            th:href="@{/files(fId=${nowFolder.parentFolderId})}"
+                            title="返回上一层"><i
+                            class="icon ion-arrow-return-left"></i></a>
+                    </li>
+                </ol>
+            </nav>
+            <div class="row" style="margin-top: -10px;">
+                <div class="col-12 col-sm-12 col-lg-12 table-responsive">
+                    <table class="table tab-bordered text-nowrap" id="files-table">
+                        <tr id="files-table-title" class="empty-space">
+                            <th></th>
+                            <th>名称</th>
+                            <th>类型</th>
+                            <th>扩展名</th>
+                            <th>大小</th>
+                            <th>下载次数</th>
+                            <th>上传时间</th>
+                        </tr>
+                        <tr th:each="folder:${folders}" class="files-items folders">
+                            <td><span style="display: none" th:text="${folder.fileFolderId}"></span><i style="font-size: 24px;color: orange" class="icon ion-android-folder"></i></td>
+                            <td>
+                                <a th:href="@{/files(fId=${folder.fileFolderId},fName=${folder.fileFolderName})}" style="font-weight: 700;color: black" th:text="${folder.fileFolderName}"></a>
+                            </td>
+                            <td style="font-weight: 300">文件夹</td>
+                            <td style="font-weight: 300">-</td>
+                            <td style="font-weight: 300">-</td>
+                            <td style="font-weight: 300">-</td>
+                            <td style="font-weight: 300" th:text="${#dates.format(folder.time,'yyyy-MM-dd HH:mm')}"></td>
+                        </tr>
+                        <tr th:each="f:${files}" class="files-items files">
+                            <td><span style="display: none" th:text="${f.myFileId}"></span>
+                                <i style="font-size: 24px;color: #3498db" th:if="${f.type == 1}" class="icon ion-document-text"></i>
+                                <i style="font-size: 24px;color: #28a745" th:if="${f.type == 2}" class="icon ion-image"></i>
+                                <i style="font-size: 24px;color: #FFC107" th:if="${f.type == 3}" class="icon ion-ios-videocam"></i>
+                                <i style="font-size: 24px;color: #dc3545" th:if="${f.type == 4}" class="icon ion-ios-musical-notes"></i>
+                                <i style="font-size: 24px;color: #343A40" th:if="${f.type == 5}" class="icon ion-document"></i>
+                            </td>
+                            <td>
+                                <a th:href="'javaScript:download('+${f.myFileId}+')'" style="font-weight: 700;color: black" th:text="${f.myFileName}"></a>
+                            </td>
+                            <td style="font-weight: 300" th:if="${f.type == 1}">文档</td>
+                            <td style="font-weight: 300" th:if="${f.type == 2}">图像</td>
+                            <td style="font-weight: 300" th:if="${f.type == 3}">视频</td>
+                            <td style="font-weight: 300" th:if="${f.type == 4}">音乐</td>
+                            <td style="font-weight: 300" th:if="${f.type == 5}">其他</td>
+                            <td style="font-weight: 300" th:text="${f.postfix}"></td>
+                            <td style="font-weight: 300" th:if="${f.size > 1024}" th:text="${f.size/1024 +'MB'}"></td>
+                            <td style="font-weight: 300" th:if="${f.size < 1024}" th:text="${f.size +'KB'}"></td>
+                            <td style="font-weight: 300" th:text="${f.downloadTime} + ' 次'"></td>
+                            <td style="font-weight: 300" th:text="${#dates.format(f.uploadTime,'yyyy-MM-dd HH:mm')}">2020-02-02 15:08</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="float-right">
+                        <a href="javaScript:addFolderElement()" class="btn btn-sm btn-outline-success"><i class="icon ion-plus"></i> 创建文件夹</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <span id="nowF" style="display: none" th:text="${nowFolder.fileFolderId}"></span>
+    <span id="preF" style="display: none" th:text="${nowFolder.parentFolderId}"></span>
+    <span id="tarFolder" style="display: none"></span>
+    <span id="tarFile" style="display: none"></span>
+
+</div>
+</body>
+</html>
